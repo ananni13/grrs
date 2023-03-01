@@ -3,6 +3,7 @@ use clap::Parser;
 use std::fs::File;
 use std::io::BufRead;
 use std::io::BufReader;
+use std::path::PathBuf;
 
 /// Search for a pattern in a file and display the lines that contain it.
 #[derive(Debug, Parser)]
@@ -10,28 +11,27 @@ struct Cli {
     /// The pattern to look for
     pattern: String,
     /// The path to the file to read
-    path: std::path::PathBuf,
+    path: PathBuf,
 }
 
 fn main() -> Result<()> {
     let Cli { pattern, path } = Cli::parse();
 
-    let file = File::open(&path).with_context(|| {
-        format!(
-            "could not read file `{}`",
-            &path.into_os_string().into_string().unwrap()
-        )
-    })?;
-    let mut reader = BufReader::new(file);
+    let file = open_file(&path)?;
 
-    find_matches(&mut reader, &pattern)
+    find_matches(&file, &pattern)
 }
 
-fn find_matches(content: &mut BufReader<File>, pattern: &str) -> Result<()> {
-    for (index, line) in content.lines().enumerate() {
+fn open_file(path: &PathBuf) -> Result<File> {
+    File::open(path).with_context(|| format!("could not read file `{}`", path.to_str().unwrap()))
+}
+
+fn find_matches(file: &File, pattern: &str) -> Result<()> {
+    let reader = BufReader::new(file);
+    for (index, line) in reader.lines().enumerate() {
         let curr = line?;
         if curr.contains(pattern) {
-            println!("line {} - {}", index, curr.trim());
+            println!("line {} - {}", index + 1, curr.trim());
         }
     }
     Ok(())
