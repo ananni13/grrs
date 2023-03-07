@@ -38,14 +38,14 @@ fn open_file(path: &PathBuf) -> Result<File> {
 fn find_matches(file: &File, pattern: &str, ignore_case: bool) -> Result<()> {
     let reader = BufReader::new(file);
     for (index, line) in reader.lines().enumerate() {
-        let curr = line.with_context(|| format!("Could not read line `{}`", index))?;
+        let line = line.with_context(|| format!("Could not read line `{}`", index))?;
 
-        if (ignore_case && curr.to_lowercase().contains(&pattern.to_lowercase()))
-            || curr.contains(&pattern)
+        if (ignore_case && line.to_lowercase().contains(&pattern.to_lowercase()))
+            || line.contains(pattern)
         {
             // let line = curr.replace(pattern, pattern.red().bold().to_string().as_str());
             let line_num = (index + 1).to_string().dimmed();
-            println!("{: >3} {}", line_num, curr);
+            println!("{: >3} {}", line_num, line);
         }
     }
     Ok(())
